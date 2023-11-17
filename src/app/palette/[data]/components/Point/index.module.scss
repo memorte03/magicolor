@@ -1,0 +1,58 @@
+@import 'variables';
+.point {
+  pointer-events: none;
+  position: absolute;
+  width: 0.875rem;
+  height: 0.875rem;
+  z-index: 10;
+
+  &:hover {
+    .handle {
+      background-color: $color-blue-500;
+    }
+  }
+}
+
+.point-circle {
+  pointer-events: all;
+  cursor: grab;
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 0.875rem;
+  height: 0.875rem;
+  background-color: $color-gray-50;
+  border: 2px solid $color-blue-500;
+  border-radius: 50%;
+  z-index: 10;
+
+  &:hover {
+    border-color: $color-blue-400;
+  }
+}
+
+.handle {
+  pointer-events: all;
+  position: absolute;
+  cursor: grab;
+  width: 0.5rem;
+  height: 0.5rem;
+  transform: translate(-50%, -50%);
+  background-color: $color-gray-50;
+  border: 2px solid $color-blue-500;
+  z-index: 10;
+
+  &:hover {
+    border: 2px solid $color-blue-400;
+  }
+}
+
+.handle-line {
+  stroke: $color-gray-700;
+  position: absolute;
+}
+
+.handle-line__path {
+  &:hover {
+    stroke: $color-blue-500;
+  }
+}

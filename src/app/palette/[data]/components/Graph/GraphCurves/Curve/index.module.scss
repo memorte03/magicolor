@@ -1,0 +1,27 @@
+@import 'variables';
+.curve__inner {
+  fill: none;
+  stroke-width: 3px;
+  stroke: $color-blue-500;
+}
+
+.curve__outer {
+  fill: none;
+  stroke-width: 4px;
+  stroke: $color-blue-600;
+}
+
+.curve__hover-padding {
+  fill: none;
+  stroke-width: 1.125rem;
+  stroke: #FFFFFF00;
+  cursor: crosshair;
+}
+
+.curve {
+  &:hover {
+    .curve__inner {
+        stroke: red;
+      }
+  }
+}

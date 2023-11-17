@@ -1,0 +1,9 @@
+@import 'variables';
+
+.graph {
+  position: relative;
+  width: 1024px;
+  height: 512px;
+  border-radius: $border-radius-sm;
+  background-color: $color-gray-300;
+}

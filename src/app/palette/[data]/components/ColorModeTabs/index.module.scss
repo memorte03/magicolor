@@ -1,0 +1,23 @@
+@import 'variables';
+
+.container {
+  background-color: $color-gray-300;
+  display: flex;
+  justify-content: center;
+  padding: $spacing-xs;
+  border-radius: 0.375rem;
+  border: 1px solid $color-gray-400;
+  margin-bottom: $spacing-lg;
+}
+
+.button {
+  background: unset;
+  outline: unset;
+  border: unset;
+  margin: $spacing-xxs;
+  border-radius: $spacing-xs;
+}
+
+.button--active {
+  background-color: $color-gray-50;
+}
