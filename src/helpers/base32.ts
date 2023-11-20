@@ -68,41 +68,54 @@ export function decodeGraphPoint(
   colorMode: ColorMode,
 ): Point {
   if (point.length === 8) {
+    const decodedX = index + 1 === totalPoints ? 1024 : 0;
+    const decodedY = decodeBase32(point.slice(0, 2));
     return {
       uuid: uuidv4(),
       colorMode: colorMode,
       position: {
-        x: index + 1 === totalPoints ? 1024 : 0,
-        y: decodeBase32(point.slice(0, 2)),
+        x: decodedX,
+        y: decodedY,
       },
       handles: [
         {
-          relativePosition: {
-            x: decodeBase32(point.slice(3, 5)) * decodeSign(point[2]),
-            y: decodeBase32(point.slice(6, 8)) * decodeSign(point[5]),
+          position: {
+            x:
+              decodedX + decodeBase32(point.slice(3, 5)) * decodeSign(point[2]),
+            y:
+              decodedY + decodeBase32(point.slice(6, 8)) * decodeSign(point[5]),
           },
         },
       ],
     };
   } else {
+    const decodedX = decodeBase32(point.slice(0, 2));
+    const decodedY = decodeBase32(point.slice(3, 5));
     return {
       uuid: uuidv4(),
       colorMode: colorMode,
       position: {
-        x: decodeBase32(point.slice(0, 2)),
-        y: decodeBase32(point.slice(3, 5)),
+        x: decodedX,
+        y: decodedY,
       },
       handles: [
         {
-          relativePosition: {
-            x: decodeBase32(point.slice(7, 9)) * decodeSign(point[6]),
-            y: decodeBase32(point.slice(10, 12)) * decodeSign(point[9]),
+          position: {
+            x:
+              decodedX + decodeBase32(point.slice(7, 9)) * decodeSign(point[6]),
+            y:
+              decodedY +
+              decodeBase32(point.slice(10, 12)) * decodeSign(point[9]),
           },
         },
         {
-          relativePosition: {
-            x: decodeBase32(point.slice(13, 15)) * decodeSign(point[12]),
-            y: decodeBase32(point.slice(15, 17)) * decodeSign(point[15]),
+          position: {
+            x:
+              decodedX +
+              decodeBase32(point.slice(13, 15)) * decodeSign(point[12]),
+            y:
+              decodedY +
+              decodeBase32(point.slice(15, 17)) * decodeSign(point[15]),
           },
         },
       ],

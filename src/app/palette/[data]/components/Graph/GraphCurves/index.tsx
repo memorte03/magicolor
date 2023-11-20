@@ -20,8 +20,9 @@ export default function GraphCurves({ colorMode }: GraphCurvesProps) {
       className={styles['container']}
       viewBox={`0 0 ${graphDimensions.width} ${graphDimensions.height}`}
     >
-      {palette.graph[colorMode].map((point, i) => {
-        const nextPoint: Point | undefined = palette.graph[colorMode][i + 1];
+      {palette.graph[colorMode].points.map((point, i) => {
+        const nextPoint: Point | undefined =
+          palette.graph[colorMode].points[i + 1];
         if (nextPoint) {
           return (
             <Curve

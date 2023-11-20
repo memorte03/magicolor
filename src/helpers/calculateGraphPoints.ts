@@ -13,15 +13,9 @@ export function calculateGraphPoints(
     },
     // handles: point.handles,
     handles: point.handles.map((handle) => ({
-      relativePosition: {
-        x: calculateGraphPosition(
-          handle.relativePosition.x,
-          graphDimensions.width,
-        ),
-        y: calculateGraphPosition(
-          handle.relativePosition.y,
-          graphDimensions.height,
-        ),
+      position: {
+        x: calculateGraphPosition(handle.position.x, graphDimensions.width),
+        y: calculateGraphPosition(handle.position.y, graphDimensions.height),
       },
     })) as PointHandles,
   }));

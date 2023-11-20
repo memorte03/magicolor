@@ -13,7 +13,7 @@ interface HandleProps {
 
 export default function Handle({
   point,
-  handle: { relativePosition },
+  handle: { position },
   index,
 }: HandleProps) {
   const [isDragging, setIsDragging] = useState(false);
@@ -21,18 +21,15 @@ export default function Handle({
   const moveHandle = usePaletteStore((state) => state.moveHandle);
 
   const style = {
-    top: `${Math.min(relativePosition.y, 0)}px`,
-    left: `${Math.min(relativePosition.x, 0)}px`,
+    top: `${Math.min(position.y, 0)}px`,
+    left: `${Math.min(position.x, 0)}px`,
   };
 
-  const horizontalStartPosition =
-    relativePosition.x < 0 ? Math.abs(relativePosition.x) : 0;
-  const horizontalEndPosition =
-    relativePosition.x >= 0 ? relativePosition.x : 0;
+  const horizontalStartPosition = position.x < 0 ? Math.abs(position.x) : 0;
+  const horizontalEndPosition = position.x >= 0 ? position.x : 0;
 
-  const verticalStartPosition =
-    relativePosition.y < 0 ? Math.abs(relativePosition.y) : 0;
-  const verticalEndPosition = relativePosition.y >= 0 ? relativePosition.y : 0;
+  const verticalStartPosition = position.y < 0 ? Math.abs(position.y) : 0;
+  const verticalEndPosition = position.y >= 0 ? position.y : 0;
 
   const onMouseDown = useCallback(
     (e: React.MouseEvent) => {
@@ -40,16 +37,17 @@ export default function Handle({
       e.preventDefault(); // Prevent default behavior
       setIsDragging(true);
       setStartDragPosition({
-        x: e.clientX - relativePosition.x,
-        y: e.clientY - relativePosition.y,
+        x: e.clientX - position.x,
+        y: e.clientY - position.y,
       });
     },
-    [relativePosition],
+    [position],
   );
 
   useEffect(() => {
     const onMouseMove = (e: MouseEvent) => {
       if (!isDragging) return;
+      console.log(e.clientX);
       moveHandle(
         point,
         {
@@ -73,14 +71,7 @@ export default function Handle({
       window.removeEventListener('mousemove', onMouseMove);
       window.removeEventListener('mouseup', onMouseUp);
     };
-  }, [
-    isDragging,
-    startDragPosition,
-    relativePosition,
-    index,
-    moveHandle,
-    point,
-  ]);
+  }, [isDragging, startDragPosition, position, index, moveHandle, point]);
 
   return (
     <>
@@ -88,19 +79,17 @@ export default function Handle({
         className={styles['handle']}
         onMouseDown={onMouseDown}
         style={{
-          top: `${relativePosition.y}px`,
-          left: `${relativePosition.x}px`,
+          top: `${position.y}px`,
+          left: `${position.x}px`,
         }}
       />
       <svg
         className={styles['handle-line']}
         fill="none"
-        height={Math.abs(relativePosition.y)}
+        height={Math.abs(position.y)}
         style={style}
-        viewBox={`0 0 ${Math.abs(relativePosition.x)} ${Math.abs(
-          relativePosition.y,
-        )}`}
-        width={Math.abs(relativePosition.x)}
+        viewBox={`0 0 ${Math.abs(position.x)} ${Math.abs(position.y)}`}
+        width={Math.abs(position.x)}
         xmlns="http://www.w3.org/2000/svg"
       >
         <path

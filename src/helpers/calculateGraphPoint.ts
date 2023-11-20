@@ -9,14 +9,8 @@ export default function calculateGraphPoint(
     x: calculateGraphPosition(point.position.x, graphDimensions.width),
     y: calculateGraphPosition(point.position.y, graphDimensions.height),
     handles: point.handles.map((handle) => ({
-      x: calculateGraphPosition(
-        point.position.x + handle.relativePosition.x,
-        graphDimensions.width,
-      ),
-      y: calculateGraphPosition(
-        point.position.y + handle.relativePosition.y,
-        graphDimensions.height,
-      ),
+      x: calculateGraphPosition(handle.position.x, graphDimensions.width),
+      y: calculateGraphPosition(handle.position.y, graphDimensions.height),
     })),
   };
 }

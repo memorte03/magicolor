@@ -37,18 +37,10 @@ export default function Point({
   useEffect(() => {
     const onMouseMove = (e: MouseEvent) => {
       if (!isDragging) return;
-      movePoint(
-        {
-          ...restProps,
-          position,
-          handles,
-          uuid,
-        },
-        {
-          x: e.clientX - startDragPosition.x,
-          y: e.clientY - startDragPosition.y,
-        },
-      );
+      movePoint(uuid, {
+        x: e.clientX - startDragPosition.x,
+        y: e.clientY - startDragPosition.y,
+      });
     };
 
     const onMouseUp = () => {
@@ -75,11 +67,13 @@ export default function Point({
   ]);
 
   return (
-    <div
-      className={styles['point']}
-      style={{ top: position.y + 'px', left: position.x + 'px' }}
-    >
-      <div className={styles['point-circle']} onMouseDown={onMouseDown} />
+    <>
+      <div
+        className={styles['point']}
+        style={{ top: position.y + 'px', left: position.x + 'px' }}
+      >
+        <div className={styles['point-circle']} onMouseDown={onMouseDown} />
+      </div>
       {handles.map((handle, i) => (
         <Handle
           handle={handle}
@@ -93,6 +87,6 @@ export default function Point({
           }}
         />
       ))}
-    </div>
+    </>
   );
 }

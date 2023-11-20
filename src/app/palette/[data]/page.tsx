@@ -4,7 +4,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 import ColorModeTabs from './components/ColorModeTabs';
-import Graph from './components/Graph';
+import Graph from './components/Graph/Graph';
 import usePaletteStore from '@/hooks/usePaletteStore';
 import { ColorMode } from '@/types';
 

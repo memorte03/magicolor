@@ -27,9 +27,13 @@ export default function Curve({ points, colorMode }: CurveProps) {
     e: React.MouseEvent<HTMLOrSVGElement, MouseEvent>,
   ) => {
     const graphXPosition = graphRef?.current?.getBoundingClientRect().x;
+    const graphYPosition = graphRef?.current?.getBoundingClientRect().y;
 
-    if (graphXPosition) {
-      addPoint(points, e.clientX - graphXPosition);
+    if (graphXPosition && graphYPosition) {
+      addPoint(points, {
+        x: e.clientX - graphXPosition,
+        y: e.clientY - graphYPosition,
+      });
     }
   };
 
