@@ -1,10 +1,11 @@
-import { calculateHSLValue } from './calculateHSLValue';
-import { Palette } from '@/types';
+import { MAX_GRAPH_Y_COORDINATE } from '@/constants';
+import { ColorMode, Palette, Segment } from '@/types';
 
 const drawQuadraticHSLGradient = (
   canvasRef: React.RefObject<HTMLCanvasElement>,
-  colorMode: string, // either 'hue', 'saturation', or 'light'
-  palette: Palette,
+  colorMode: ColorMode, // either 'hue', 'saturation', or 'light'
+  { graph }: Palette,
+
   // selectedPoint: number // index of the point being modified
 ) => {
   if (!canvasRef.current) return;
@@ -18,29 +19,45 @@ const drawQuadraticHSLGradient = (
 
   // TODO: Potential optimization
   // Draw each x-position on the gradient.
+
+  const flattenSegments = (segments: Segment[]): number[] => {
+    return segments.reduce<number[]>((acc, segment) => {
+      const curve = segment.curve.map(
+        (values) => values.toSorted((a, b) => b - a)[0],
+      );
+      console.log(curve.length);
+      return acc.concat(curve);
+    }, []);
+  };
+
+  const hueValues = flattenSegments(graph.hue.segments);
+  const saturationValues = flattenSegments(graph.saturation.segments);
+  const lightValues = flattenSegments(graph.light.segments);
+
   for (let x = 0; x < width; x++) {
     // Calculate inactive HSL values.
     const h =
       colorMode === 'hue'
         ? null
-        : calculateHSLValue(palette.graph.hue.points, x, width) * 3.6;
+        : Math.round(hueValues[x] / MAX_GRAPH_Y_COORDINATE) * 3.6;
     const s =
       colorMode === 'saturation'
         ? null
-        : calculateHSLValue(palette.graph.saturation.points, x, width);
+        : Math.round(saturationValues[x] / MAX_GRAPH_Y_COORDINATE);
     const l =
       colorMode === 'light'
         ? null
-        : calculateHSLValue(palette.graph.light.points, x, width);
+        : Math.round(lightValues[x] / MAX_GRAPH_Y_COORDINATE);
 
     // Create a gradient
     const grd = ctx.createLinearGradient(0, 0, 0, height);
 
     for (let y = 0; y < height; y++) {
+      const deltaY = y / height;
       grd.addColorStop(
-        y / height,
-        `hsl(${h || (y / height) * 360}, ${s || (y / height) * 100}%, ${
-          l || (y / height) * 100
+        deltaY,
+        `hsl(${h || deltaY * 360}, ${s || deltaY * 100}%, ${
+          l || deltaY * 100
         }%)`,
       );
     }

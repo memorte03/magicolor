@@ -9,11 +9,12 @@ import {
   MIN_GRAPH_Y_COORDINATE,
   POINT_MARGIN,
 } from '@/constants';
+import { decodeGraphPoint, decodeSwatch, testBase32 } from '@/helpers';
 import adjustPointHandles from '@/helpers/adjustPointHandles';
-import { decodeGraphPoint, decodeSwatch } from '@/helpers/base32';
 import { calculateBezierSegment } from '@/helpers/calculateBezierSegment';
 import calculateIntermediateBezierPoint from '@/helpers/calculateIntermediateBezierPoint';
 import { calculateStorePosition } from '@/helpers/position';
+import trimBezierSegment from '@/helpers/trimBezierSegment';
 import {
   Axis,
   ColorMode,
@@ -204,11 +205,8 @@ const usePaletteStore = create<PaletteState>((set, get) => ({
   },
   setGraphDimensions: () => {},
   setDataFromBase32: (base32) => {
-    const base32Regex =
-      /^h-[A-Z2-7]{8}(?:-[A-Z2-7]{16})*-[A-Z2-7]{8}-s-[A-Z2-7]{8}(?:-[A-Z2-7]{16})*-[A-Z2-7]{8}-l-[A-Z2-7]{8}(?:-[A-Z2-7]{16})*-[A-Z2-7]{8}-p*(?:-[A-Z2-7]{2})*$/;
-    // TODO: Regexp accepts strings with -ppppppppppppp-
-
-    if (!base32Regex.test(base32)) {
+    const isBase32Valid = testBase32(base32);
+    if (!isBase32Valid) {
       console.error(`Invalid base32 string ${base32}`);
       return;
     }
@@ -226,12 +224,7 @@ const usePaletteStore = create<PaletteState>((set, get) => ({
           const points = pathSegment.split('-');
           const decodedPoints = points.map(
             (point, j): Point =>
-              decodeGraphPoint(
-                point,
-                j,
-                points.length,
-                paletteHslDictionary[i],
-              ),
+              decodeGraphPoint(point, paletteHslDictionary[i], j),
           );
 
           const segments = decodedPoints.reduce<Segment[]>(
@@ -242,11 +235,15 @@ const usePaletteStore = create<PaletteState>((set, get) => ({
 
               const nextPoint = decodedPoints[j + 1];
 
-              const segment = {
-                startPointUuid: point.uuid,
-                endPointUuid: nextPoint.uuid,
-                curve: calculateBezierSegment(point, nextPoint).curve,
-              };
+              const segment = trimBezierSegment(
+                point.position.x,
+                nextPoint.position.x,
+                {
+                  startPointUuid: point.uuid,
+                  endPointUuid: nextPoint.uuid,
+                  curve: calculateBezierSegment(point, nextPoint).curve,
+                },
+              );
 
               return [...segmentsAcc, segment];
             },
