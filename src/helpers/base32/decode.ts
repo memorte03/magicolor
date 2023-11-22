@@ -1,13 +1,22 @@
 import { v4 as uuidv4 } from 'uuid';
 
+import { calculateBezierSegment } from '../calculateBezierSegment';
+import trimBezierSegment from '../trimBezierSegment';
+
 import {
   BASE32_DECODE_CHAR,
+  PATH_COLOR_MODE_SEGMENT_COUNT,
   SIGN_DECODE_CHAR,
   SignChar,
   SignValue,
+  testBase32,
 } from './index';
-import { MAX_GRAPH_X_COORDINATE, MIN_GRAPH_X_COORDINATE } from '@/constants';
-import { ColorMode, Point, Swatch } from '@/types';
+import {
+  COLOR_MODES,
+  MAX_GRAPH_X_COORDINATE,
+  MIN_GRAPH_X_COORDINATE,
+} from '@/constants';
+import { ColorMode, Palette, Point, Segment, Swatch } from '@/types';
 
 /**
  *
@@ -15,14 +24,17 @@ import { ColorMode, Point, Swatch } from '@/types';
  * @returns decoded numerical value
  */
 export function decodeBase32Value(base32: string): number {
-  return base32.split('').reduce((acc, char, i) => {
-    if (!Object.keys(BASE32_DECODE_CHAR).includes(char)) {
-      return 0;
-    }
-    const charValue =
-      BASE32_DECODE_CHAR[char as keyof typeof BASE32_DECODE_CHAR];
-    return acc + Math.pow(charValue, i + 1);
-  }, 0);
+  return base32
+    .split('')
+    .reverse()
+    .reduce((acc, char, i) => {
+      const charValue =
+        BASE32_DECODE_CHAR[char as keyof typeof BASE32_DECODE_CHAR];
+      if (charValue === undefined) {
+        throw new Error(`Invalid character '${char}' in base32 string.`);
+      }
+      return acc + charValue * Math.pow(32, i);
+    }, 0);
 }
 
 /**
@@ -123,4 +135,63 @@ export function decodeGraphPoint(
       'The specified base32 path does not match the required pattern format.',
     );
   }
+}
+
+export function decodePaletteFromPath(base32: string): Palette {
+  if (!testBase32(base32)) {
+    throw new Error(`Invalid base32 string ${base32}`);
+  }
+
+  const pathSegments = base32.split(/h-|-s-|-l-|-p-/).slice(1);
+
+  const palette = pathSegments
+    .slice(0, PATH_COLOR_MODE_SEGMENT_COUNT)
+    .reduce<Palette>((paletteAcc, pathSegment, index) => {
+      const points = pathSegment
+        .split('-')
+        .map(
+          (point, j): Point => decodeGraphPoint(point, COLOR_MODES[index], j),
+        );
+
+      const segments = points.reduce<Segment[]>((segmentsAcc, point, j) => {
+        if (!(j < points.length - 1)) {
+          return segmentsAcc;
+        }
+
+        const nextPoint = points[j + 1];
+
+        const segment = trimBezierSegment(
+          point.position.x,
+          nextPoint.position.x,
+          {
+            startPointUuid: point.uuid,
+            endPointUuid: nextPoint.uuid,
+            curve: calculateBezierSegment(point, nextPoint).curve,
+          },
+        );
+
+        return [...segmentsAcc, segment];
+      }, []);
+
+      return {
+        ...paletteAcc,
+        graph: {
+          ...paletteAcc.graph,
+          [COLOR_MODES[index]]: {
+            points,
+            segments,
+          },
+        },
+      };
+    }, {} as Palette);
+
+  const swatches: Swatch[] = pathSegments
+    .at(-1)!
+    .split('-')
+    .map((encodedSwatch) => decodeSwatch(encodedSwatch));
+
+  return {
+    ...palette,
+    swatches: swatches,
+  };
 }

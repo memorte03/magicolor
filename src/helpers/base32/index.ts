@@ -1,3 +1,5 @@
+import { ColorMode } from '@/types';
+
 export const BASE32_DECODE_CHAR = {
   A: 0,
   B: 1,
@@ -49,6 +51,24 @@ export const SIGN_ENCODE_CHAR = Object.fromEntries(
   Object.entries(SIGN_DECODE_CHAR).map(([key, value]) => [value, key]),
 );
 
-export { decodeBase32Value, decodeGraphPoint, decodeSwatch } from './decode';
-export { encodeBase32Value, encodeGraphPoint, encodeSwatch } from './encode';
+export const PATH_COLOR_MODE_SEGMENT_COUNT = 3 as const;
+export const PATH_COLOR_MODE_ABBREVIATION: { [key in ColorMode]: string } = {
+  hue: 'h',
+  saturation: 's',
+  light: 'l',
+} as const;
+export const PATH_SWATCHES_ABBREVIATION = 'p' as const;
+
+export {
+  decodeBase32Value,
+  decodeGraphPoint,
+  decodePaletteFromPath,
+  decodeSwatch,
+} from './decode';
+export {
+  encodeBase32Value,
+  encodeGraphPoint,
+  encodePathFromPalette,
+  encodeSwatch,
+} from './encode';
 export { testBase32 } from './test';

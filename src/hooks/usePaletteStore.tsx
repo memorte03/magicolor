@@ -9,12 +9,11 @@ import {
   MIN_GRAPH_Y_COORDINATE,
   POINT_MARGIN,
 } from '@/constants';
-import { decodeGraphPoint, decodeSwatch, testBase32 } from '@/helpers';
+import { decodePaletteFromPath, testBase32 } from '@/helpers';
 import adjustPointHandles from '@/helpers/adjustPointHandles';
 import { calculateBezierSegment } from '@/helpers/calculateBezierSegment';
 import calculateIntermediateBezierPoint from '@/helpers/calculateIntermediateBezierPoint';
 import { calculateStorePosition } from '@/helpers/position';
-import trimBezierSegment from '@/helpers/trimBezierSegment';
 import {
   Axis,
   ColorMode,
@@ -22,7 +21,6 @@ import {
   Palette,
   Point,
   Position,
-  Segment,
 } from '@/types';
 
 const initialGraphRef: RefObject<HTMLDivElement> | null = null;
@@ -141,7 +139,6 @@ export const initialPalette: Palette = {
       segments: [],
     },
   },
-  segments: [],
   swatches: [
     {
       point: 10,
@@ -204,67 +201,14 @@ const usePaletteStore = create<PaletteState>((set, get) => ({
     set({ graphRef: ref });
   },
   setGraphDimensions: () => {},
+
   setDataFromBase32: (base32) => {
     const isBase32Valid = testBase32(base32);
     if (!isBase32Valid) {
       console.error(`Invalid base32 string ${base32}`);
       return;
     }
-
-    const pathSegments = base32.split(/h-|-s-|-l-|-p-/).slice(1);
-    const paletteHslDictionary = ['hue', 'saturation', 'light'] as const;
-
-    set({
-      palette: pathSegments.reduce<Palette>((acc, pathSegment, i) => {
-        const newAcc = { ...acc };
-        const isGraphSegment = i < 3;
-
-        if (isGraphSegment) {
-          // Decode HSL Graph points
-          const points = pathSegment.split('-');
-          const decodedPoints = points.map(
-            (point, j): Point =>
-              decodeGraphPoint(point, paletteHslDictionary[i], j),
-          );
-
-          const segments = decodedPoints.reduce<Segment[]>(
-            (segmentsAcc, point, j) => {
-              if (!(j < decodedPoints.length - 1)) {
-                return segmentsAcc;
-              }
-
-              const nextPoint = decodedPoints[j + 1];
-
-              const segment = trimBezierSegment(
-                point.position.x,
-                nextPoint.position.x,
-                {
-                  startPointUuid: point.uuid,
-                  endPointUuid: nextPoint.uuid,
-                  curve: calculateBezierSegment(point, nextPoint).curve,
-                },
-              );
-
-              return [...segmentsAcc, segment];
-            },
-            [],
-          );
-
-          newAcc.graph[paletteHslDictionary[i]] = {
-            segments: segments,
-            points: decodedPoints,
-          };
-        } else {
-          // Decode swatches
-          const swatches = pathSegment.split('-');
-          newAcc.swatches = swatches.map((swatch) => {
-            return decodeSwatch(swatch);
-          });
-        }
-
-        return newAcc;
-      }, initialPalette),
-    });
+    set({ palette: decodePaletteFromPath(base32) });
   },
 
   movePoint: (uuid, position) => {

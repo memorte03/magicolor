@@ -5,6 +5,11 @@ import Point from '../Point';
 
 import GraphCurves from './GraphCurves';
 import GraphGradient from './GraphGradient';
+import {
+  decodeBase32Value,
+  encodeBase32Value,
+  encodePathFromPalette,
+} from '@/helpers/base32';
 import { benchmarkBezier } from '@/helpers/calculateBezierSegment';
 import { calculateGraphPoints } from '@/helpers/calculateGraphPoints';
 import usePaletteStore from '@/hooks/usePaletteStore';
@@ -42,6 +47,8 @@ export default function Graph({ colorMode }: GraphProps) {
 
   const handleClick = () => {
     benchmarkBezier(points[0], points[1]);
+    console.log(encodePathFromPalette(palette));
+    console.log(decodeBase32Value(encodeBase32Value(253)));
   };
   // TODO: SET GRAPH DIMENSIONS!
   // TODO: REMOVE

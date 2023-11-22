@@ -1,10 +1,16 @@
-import { Point, Swatch } from '@/types';
+import { COLOR_MODES } from '@/constants';
+import { Palette, Point, Swatch } from '@/types';
 
-import { BASE32_ENCODE_CHAR, SignChar } from '.';
+import {
+  BASE32_ENCODE_CHAR,
+  PATH_COLOR_MODE_ABBREVIATION,
+  PATH_SWATCHES_ABBREVIATION,
+  SignChar,
+} from '.';
 
 /**
  * Encodes a numerical value into a base32 string.
- * @param value - The numerical value to encode (MUST BE POSITIVE).
+ * @param value - The numerical value to encode (MUST BE IN THE RANGE 0-1024).
  * @returns The encoded base32 string.
  */
 export function encodeBase32Value(value: number): string {
@@ -13,8 +19,11 @@ export function encodeBase32Value(value: number): string {
       'Negative values cannot be encoded in base32. Provide a positive sign value.',
     );
   }
+  if (value > 1024) {
+    throw new Error('Values over 1024 cannot be encoded in base32.');
+  }
 
-  if (value === 0) return BASE32_ENCODE_CHAR[0];
+  if (value === 0) return BASE32_ENCODE_CHAR[0] + BASE32_ENCODE_CHAR[0];
 
   let base32 = '';
   while (value > 0) {
@@ -23,7 +32,7 @@ export function encodeBase32Value(value: number): string {
     value = Math.floor(value / 32);
   }
 
-  return base32;
+  return base32.padStart(2, BASE32_ENCODE_CHAR[0]);
 }
 
 /**
@@ -49,7 +58,7 @@ export function encodeGraphPoint(
 ) {
   let base32 = '';
   const isFirstInPathSegment = index === 0;
-  const isLastInPathSegment = index === totalPoints;
+  const isLastInPathSegment = index === totalPoints - 1;
 
   const encodeSign = (value: number): SignChar => {
     return value > 0 ? '1' : '0';
@@ -59,7 +68,9 @@ export function encodeGraphPoint(
     const handleRelativeYCoordinate =
       point.handles[0].position.y - point.position.y;
     base32 += encodeBase32Value(point.position.y);
-    base32 += encodeBase32Value(point.handles[0].position.x - point.position.x);
+    base32 += encodeBase32Value(
+      Math.abs(point.handles[0].position.x - point.position.x),
+    );
     base32 += encodeSign(handleRelativeYCoordinate);
     base32 += encodeBase32Value(Math.abs(handleRelativeYCoordinate));
   } else {
@@ -85,4 +96,33 @@ export function encodeGraphPoint(
   }
 
   return base32;
+}
+
+export function encodePathFromPalette(palette: Palette): string {
+  const graphPathSegment = COLOR_MODES.reduce<string>(
+    (graphPathAcc, colorMode) => {
+      const pointCount = palette.graph[colorMode].points.length;
+      const pointsPathSegment = palette.graph[colorMode].points.reduce<string>(
+        (pointsPathAcc, point, index) => {
+          console.log(pointCount, index, point);
+          return `${pointsPathAcc}${encodeGraphPoint(
+            point,
+            index,
+            pointCount,
+          )}-`;
+        },
+        '',
+      );
+      return (graphPathAcc += `${PATH_COLOR_MODE_ABBREVIATION[colorMode]}-${pointsPathSegment}`);
+    },
+    '',
+  );
+
+  const swatchesPathSegment =
+    PATH_SWATCHES_ABBREVIATION +
+    palette.swatches.reduce<string>((swatchesPathAcc, swatch) => {
+      return `${swatchesPathAcc}-${encodeSwatch(swatch)}`;
+    }, '');
+
+  return graphPathSegment + swatchesPathSegment;
 }

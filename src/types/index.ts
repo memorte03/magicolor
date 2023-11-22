@@ -31,23 +31,23 @@ export interface Swatch {
   hex?: string;
   hsl?: string;
 }
+export interface Graph {
+  hue: {
+    points: Point[];
+    segments: Segment[];
+  };
+  saturation: {
+    points: Point[];
+    segments: Segment[];
+  };
+  light: {
+    points: Point[];
+    segments: Segment[];
+  };
+}
 
 export interface Palette {
-  segments: Segment[];
-  graph: {
-    hue: {
-      points: Point[];
-      segments: Segment[];
-    };
-    saturation: {
-      points: Point[];
-      segments: Segment[];
-    };
-    light: {
-      points: Point[];
-      segments: Segment[];
-    };
-  };
+  graph: Graph;
   swatches: Swatch[];
 }
 

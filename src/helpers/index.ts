@@ -2,6 +2,7 @@
 export {
   decodeBase32Value,
   decodeGraphPoint,
+  decodePaletteFromPath,
   decodeSwatch,
   encodeBase32Value,
   encodeGraphPoint,
