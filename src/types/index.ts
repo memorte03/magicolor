@@ -2,36 +2,37 @@ import { AXES, COLOR_MODES } from '@/constants';
 
 export type ColorMode = (typeof COLOR_MODES)[number];
 export type Axis = (typeof AXES)[number];
-export interface Position {
+export type Position = {
   x: number;
   y: number;
-}
+};
 
-export interface Handle {
+export type Handle = {
   position: Position;
-}
+};
 
 export type PointHandles = [Handle, Handle] | [Handle];
 
-export interface Point {
+export type Point = {
   uuid: string;
   position: Position;
   handles: PointHandles;
   colorMode: ColorMode;
-}
+};
 
-export interface Segment {
+export type Segment = {
   startPointUuid: string;
   endPointUuid: string;
-  curve: number[][];
-}
+  curve: number[];
+};
 
-export interface Swatch {
+export type Swatch = {
   point: number;
   hex?: string;
   hsl?: string;
-}
-export interface Graph {
+};
+
+export type Graph = {
   hue: {
     points: Point[];
     segments: Segment[];
@@ -44,14 +45,14 @@ export interface Graph {
     points: Point[];
     segments: Segment[];
   };
-}
+};
 
-export interface Palette {
+export type Palette = {
   graph: Graph;
   swatches: Swatch[];
-}
+};
 
-export interface GraphDimensions {
+export type GraphDimensions = {
   width: number;
   height: number;
-}
+};

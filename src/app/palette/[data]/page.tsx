@@ -1,12 +1,11 @@
 'use client';
 
 import { usePathname, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 
 import ColorModeTabs from './components/ColorModeTabs';
 import Graph from './components/Graph/Graph';
 import usePaletteStore from '@/hooks/usePaletteStore';
-import { ColorMode } from '@/types';
 
 import styles from './index.module.scss';
 
@@ -18,7 +17,7 @@ interface PaletteProps {
 
 export default function Palette({ params }: PaletteProps) {
   const router = useRouter();
-  const [colorMode, setColorMode] = useState<ColorMode>('hue');
+  const colorMode = usePaletteStore((state) => state.colorMode);
 
   // const handleClick = () => {
   //   router.replace(`${params.data}2137`);
@@ -38,9 +37,9 @@ export default function Palette({ params }: PaletteProps) {
       {/* <button onClick={handleClick} type="button">
       </button> */}
       <main className={styles['main']}>
-        <ColorModeTabs colorMode={colorMode} setColorMode={setColorMode} />
+        <ColorModeTabs />
 
-        <Graph colorMode={colorMode} />
+        <Graph />
       </main>
     </div>
   );

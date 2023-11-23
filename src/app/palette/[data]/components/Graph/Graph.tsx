@@ -13,24 +13,20 @@ import {
 import { benchmarkBezier } from '@/helpers/calculateBezierSegment';
 import { calculateGraphPoints } from '@/helpers/calculateGraphPoints';
 import usePaletteStore from '@/hooks/usePaletteStore';
-import { ColorMode } from '@/types';
 
 import styles from './index.module.scss';
 
-interface GraphProps {
-  colorMode: ColorMode;
-}
-
-export default function Graph({ colorMode }: GraphProps) {
+export default function Graph() {
   const ref = useRef<HTMLDivElement>(null);
   const [debugInfo, setDebugInfo] = useState<string | null>(null);
-  const [palette, graphDimensions, setGraphRef, setGraphDimensions] =
+  const [palette, graphDimensions, setGraphRef, setGraphDimensions, colorMode] =
     usePaletteStore(
       useShallow((state) => [
         state.palette,
         state.graphDimensions,
         state.setGraphRef,
         state.setGraphDimensions,
+        state.colorMode,
       ]),
     );
 

@@ -23,7 +23,8 @@
       "@/types": ["./src/types/index.ts"],
       "@/constants": ["./src/constants/index.ts"],
       "@/helpers": ["./src/helpers/index.ts"],
-      "@/hooks": ["./src/hooks/index.ts"]
+      "@/hooks": ["./src/hooks/index.ts"],
+      "@/classes": ["./src/classes/index.ts"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],

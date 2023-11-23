@@ -1,12 +1,10 @@
+import { useShallow } from 'zustand/react/shallow';
+
 import { COLOR_MODES } from '@/constants';
+import usePaletteStore from '@/hooks/usePaletteStore';
 import { ColorMode } from '@/types';
 
 import styles from './index.module.scss';
-
-interface ColorModeTabsProps {
-  colorMode: ColorMode;
-  setColorMode: (colorMode: ColorMode) => void;
-}
 
 interface ColorModeTabButtonProps {
   colorMode: ColorMode;
@@ -37,10 +35,10 @@ const ColorModeTabButton = ({
   );
 };
 
-export default function ColorModeTabs({
-  colorMode,
-  setColorMode,
-}: ColorModeTabsProps) {
+export default function ColorModeTabs() {
+  const [colorMode, setColorMode] = usePaletteStore(
+    useShallow((state) => [state.colorMode, state.setColorMode]),
+  );
   return (
     <div className={styles['container']}>
       {COLOR_MODES.map((mode) => (

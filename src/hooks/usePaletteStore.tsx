@@ -2,16 +2,14 @@ import { RefObject } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { create } from 'zustand';
 
+import { Bezier } from '@/classes';
 import {
   MAX_GRAPH_X_COORDINATE,
   MAX_GRAPH_Y_COORDINATE,
-  MIN_GRAPH_X_COORDINATE,
   MIN_GRAPH_Y_COORDINATE,
-  POINT_MARGIN,
 } from '@/constants';
 import { decodePaletteFromPath, testBase32 } from '@/helpers';
 import adjustPointHandles from '@/helpers/adjustPointHandles';
-import { calculateBezierSegment } from '@/helpers/calculateBezierSegment';
 import calculateIntermediateBezierPoint from '@/helpers/calculateIntermediateBezierPoint';
 import { calculateStorePosition } from '@/helpers/position';
 import {
@@ -155,7 +153,7 @@ interface PaletteState {
   graphDimensions: GraphDimensions;
   palette: Palette;
   graphRef: RefObject<HTMLDivElement> | null;
-  selectedColorMode: ColorMode;
+  colorMode: ColorMode;
 
   // Helpers
   normalizeCoordinate: (coordinate: number, axis: Axis) => number;
@@ -164,6 +162,7 @@ interface PaletteState {
   setGraphRef: (ref: RefObject<HTMLDivElement>) => void;
   setDataFromBase32: (base32: string) => void;
   setGraphDimensions: () => void;
+  setColorMode: (colorMode: ColorMode) => void;
 
   movePoint: (uuid: string, position: Position) => void;
   addPoint: (points: [Point, Point], cursorPosition: Position) => void;
@@ -180,7 +179,7 @@ const usePaletteStore = create<PaletteState>((set, get) => ({
   palette: initialPalette,
   graphDimensions: initialGraphDimensions,
   graphRef: initialGraphRef,
-  selectedColorMode: 'hue',
+  colorMode: 'hue',
 
   // Helpers
   normalizeCoordinate: (coordinate, axis) => {
@@ -211,10 +210,14 @@ const usePaletteStore = create<PaletteState>((set, get) => ({
     set({ palette: decodePaletteFromPath(base32) });
   },
 
+  setColorMode: (colorMode) => {
+    set({ colorMode: colorMode });
+  },
+
   movePoint: (uuid, position) => {
     set((state) => {
       const normalizedPosition = get().normalizePosition(position);
-      const colorMode = get().selectedColorMode;
+      const colorMode = get().colorMode;
       const prevPoints = state.palette.graph[colorMode].points;
 
       const point = prevPoints.find((prevPoint) => prevPoint.uuid === uuid);
@@ -230,19 +233,19 @@ const usePaletteStore = create<PaletteState>((set, get) => ({
       const pointIndex = prevPoints.findIndex(
         (prevPoint) => prevPoint.uuid === uuid,
       );
-      if (pointIndex === 0) {
-        normalizedPosition.x = MIN_GRAPH_X_COORDINATE;
-      } else if (pointIndex === prevPoints.length - 1) {
-        normalizedPosition.x = MAX_GRAPH_Y_COORDINATE;
-      } else {
-        normalizedPosition.x = Math.min(
-          prevPoints[pointIndex + 1].position.x - POINT_MARGIN,
-          Math.max(
-            prevPoints[pointIndex - 1].position.x + POINT_MARGIN,
-            normalizedPosition.x,
-          ),
-        );
-      }
+      // if (pointIndex === 0) {
+      //   normalizedPosition.x = MIN_GRAPH_X_COORDINATE;
+      // } else if (pointIndex === prevPoints.length - 1) {
+      //   normalizedPosition.x = MAX_GRAPH_Y_COORDINATE;
+      // } else {
+      //   normalizedPosition.x = Math.min(
+      //     prevPoints[pointIndex + 1].position.x - POINT_MARGIN,
+      //     Math.max(
+      //       prevPoints[pointIndex - 1].position.x + POINT_MARGIN,
+      //       normalizedPosition.x,
+      //     ),
+      //   );
+      // }
 
       /*
       Limit the y position to prevent the point from being dragged
@@ -256,17 +259,29 @@ const usePaletteStore = create<PaletteState>((set, get) => ({
       /*
       If an adjacent curve overlaps limit */
       if (pointIndex !== 0) {
-        const segment = calculateBezierSegment(prevPoints[pointIndex - 1], {
-          ...point,
-          position: normalizedPosition,
-          handles: adjustPointHandles(
-            {
-              ...point,
-              position: get().normalizePosition(point.position),
-            },
-            normalizedPosition,
-          ),
-        }).curve;
+        const bezier = new Bezier([
+          prevPoints[pointIndex - 1],
+          {
+            ...point,
+            position: normalizedPosition,
+            handles: adjustPointHandles(point, normalizedPosition),
+          },
+        ]);
+
+        const getFinalCoord = (coord: number, min: number, max: number) => {
+          if (min !== coord) return min;
+          if (max !== coord) return max;
+          return coord;
+        };
+
+        const maxX = bezier.getBoundMaxX('p3', point.position);
+        const minX = bezier.getBoundMinX('p3', point.position);
+        const maxY = bezier.getBoundMaxY('p3', point.position);
+        const minY = bezier.getBoundMinY('p3', point.position);
+        console.log(maxX, minX, maxY, minY);
+
+        normalizedPosition.x = getFinalCoord(normalizedPosition.x, minX, maxX);
+        normalizedPosition.y = getFinalCoord(normalizedPosition.y, minY, maxY);
       }
 
       // If the curve extends over the top/bottom boundary, limit the y

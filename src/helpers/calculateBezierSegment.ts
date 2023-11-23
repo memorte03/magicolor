@@ -1,8 +1,9 @@
 // Calculate Bezier curve between two given points using the De Casteljau's algorithm
 
 // import { mark, printBenchmark } from './benchmark';
-import { Point, Position } from '@/types';
 import { mark, printBenchmark } from './benchmark';
+import { Bezier } from '@/classes';
+import { Point, Position } from '@/types';
 
 export function calculateBezierSegment1(point1: Point, point2: Point) {
   // Convert store positions to calculation-ready positions
@@ -174,6 +175,14 @@ export function benchmarkBezier(point1: Point, point2: Point) {
     calculateBezierSegment(point1, point2);
   }
   mark('bezier3 end');
+
+  mark('bezier4 start');
+  for (let i = 0; i < 10; i++) {
+    const bezier = new Bezier([point1, point2]).toFlatArray();
+    console.log(bezier);
+    // console.log(bezier);
+  }
+  mark('bezier4 end');
   printBenchmark();
 
   console.log(calculateBezierSegment(point1, point2));

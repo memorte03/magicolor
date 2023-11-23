@@ -22,11 +22,7 @@ const drawQuadraticHSLGradient = (
 
   const flattenSegments = (segments: Segment[]): number[] => {
     return segments.reduce<number[]>((acc, segment) => {
-      const curve = segment.curve.map(
-        (values) => values.toSorted((a, b) => b - a)[0],
-      );
-      console.log(curve.length);
-      return acc.concat(curve);
+      return acc.concat(segment.curve);
     }, []);
   };
 
@@ -34,25 +30,25 @@ const drawQuadraticHSLGradient = (
   const saturationValues = flattenSegments(graph.saturation.segments);
   const lightValues = flattenSegments(graph.light.segments);
 
-  for (let x = 0; x < width; x++) {
+  for (let x = 0; x < width; x += 4) {
     // Calculate inactive HSL values.
     const h =
       colorMode === 'hue'
         ? null
-        : Math.round(hueValues[x] / MAX_GRAPH_Y_COORDINATE) * 3.6;
+        : (hueValues[x] / MAX_GRAPH_Y_COORDINATE) * 360;
     const s =
       colorMode === 'saturation'
         ? null
-        : Math.round(saturationValues[x] / MAX_GRAPH_Y_COORDINATE);
+        : (saturationValues[x] / MAX_GRAPH_Y_COORDINATE) * 100;
     const l =
       colorMode === 'light'
         ? null
-        : Math.round(lightValues[x] / MAX_GRAPH_Y_COORDINATE);
+        : (lightValues[x] / MAX_GRAPH_Y_COORDINATE) * 100;
 
     // Create a gradient
     const grd = ctx.createLinearGradient(0, 0, 0, height);
 
-    for (let y = 0; y < height; y++) {
+    for (let y = 0; y < height; y += 4) {
       const deltaY = y / height;
       grd.addColorStop(
         deltaY,
@@ -64,7 +60,7 @@ const drawQuadraticHSLGradient = (
 
     // Draw the gradient
     ctx.fillStyle = grd;
-    ctx.fillRect(x, 0, 1, height);
+    ctx.fillRect(x, 0, 4, height);
   }
 };
 

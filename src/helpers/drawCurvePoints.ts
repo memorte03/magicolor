@@ -1,8 +1,10 @@
+import flattenSegments from './flattenSegments';
 import { ColorMode, Palette } from '@/types';
 
 function drawDot(x: number, y: number, ctx: CanvasRenderingContext2D) {
   ctx.beginPath();
   ctx.arc(x, y, 3, 0, 2 * Math.PI, true);
+  ctx.fillStyle = '#FF0000';
   ctx.fill();
 }
 
@@ -15,13 +17,7 @@ export default function drawCurvePoints(
   const ctx = canvasRef.current.getContext('2d');
   if (!ctx) return;
 
-  console.log(palette.graph[colorMode].segments);
-
-  palette.graph[colorMode].segments.forEach((segment) => {
-    segment.curve.forEach((correspondingYValues, i) => {
-      correspondingYValues.forEach((y) => {
-        drawDot(i, y / 2, ctx);
-      });
-    });
+  flattenSegments(palette.graph[colorMode].segments).forEach((y, i) => {
+    drawDot(i, y / 2, ctx);
   });
 }

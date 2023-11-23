@@ -1,6 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
 
-import { calculateBezierSegment } from '../calculateBezierSegment';
 import trimBezierSegment from '../trimBezierSegment';
 
 import {
@@ -11,6 +10,7 @@ import {
   SignValue,
   testBase32,
 } from './index';
+import { Bezier } from '@/classes';
 import {
   COLOR_MODES,
   MAX_GRAPH_X_COORDINATE,
@@ -166,7 +166,7 @@ export function decodePaletteFromPath(base32: string): Palette {
           {
             startPointUuid: point.uuid,
             endPointUuid: nextPoint.uuid,
-            curve: calculateBezierSegment(point, nextPoint).curve,
+            curve: new Bezier([point, nextPoint]).toFlatArray(),
           },
         );
 

@@ -2,7 +2,6 @@ import { useEffect, useRef } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
 import drawCurvePoints from '@/helpers/drawCurvePoints';
-import drawQuadraticHSLGradient from '@/helpers/drawQuadraticHLSGradient';
 import usePaletteStore from '@/hooks/usePaletteStore';
 import { ColorMode } from '@/types';
 
@@ -20,7 +19,7 @@ export default function GraphGradient({ colorMode }: GraphGradientProps) {
   );
 
   useEffect(() => {
-    drawQuadraticHSLGradient(ref, colorMode, palette);
+    // drawQuadraticHSLGradient(ref, colorMode, palette);
     drawCurvePoints(ref, colorMode, palette);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [colorMode]);
