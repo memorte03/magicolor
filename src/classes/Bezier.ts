@@ -5,34 +5,45 @@ import {
   MIN_GRAPH_X_COORDINATE,
   MIN_GRAPH_Y_COORDINATE,
 } from '@/constants';
-import { Point, Position } from '@/types';
+import isBezierInBoundaries from '@/helpers/bezier/isBezierInBoundaries';
+import { Axis, BezierPointName, BezierPoints, Point, Position } from '@/types';
 
 type BoundaryDimension = 'maxX' | 'minX' | 'maxY' | 'minY';
-type BezierPointName = 'p0' | 'p1' | 'p2' | 'p3';
-type BezierPoints = {
-  [key in BezierPointName]: Position;
+type FinalPosition = {
+  x: null | number;
+  y: null | number;
+};
+type IsOutOfBounds = {
+  min: {
+    [key in Axis]: boolean;
+  };
+  max: {
+    [key in Axis]: boolean;
+  };
 };
 
-const isBezierPoints = (obj: any): obj is BezierPoints => {
+const POINT_HANDLE = {
+  p0: 'p1',
+  p3: 'p2',
+} as const;
+
+export const isBezierPoints = (obj: any): obj is BezierPoints => {
   return 'p0' in obj && 'p1' in obj && 'p2' in obj && 'p3' in obj;
 };
 
 export default class Bezier {
   points: BezierPoints;
   isDoublingBack: boolean;
-  isOutOfLeftBounds: boolean;
-  isOutOfRightBounds: boolean;
-  isOutOfTopBounds: boolean;
-  isOutOfBottomBounds: boolean;
+  isOutOfBounds: IsOutOfBounds;
   curve: Position[];
 
   constructor(points: [Point, Point] | BezierPoints) {
+    this.isOutOfBounds = {
+      min: { x: false, y: false },
+      max: { x: false, y: false },
+    };
     this.isDoublingBack = false;
     this.curve = [];
-    this.isOutOfTopBounds = false;
-    this.isOutOfRightBounds = false;
-    this.isOutOfBottomBounds = false;
-    this.isOutOfLeftBounds = false;
 
     this.points = isBezierPoints(points)
       ? points
@@ -47,13 +58,14 @@ export default class Bezier {
   }
 
   private updateBounds(x: number, y: number) {
-    this.isOutOfTopBounds = this.isOutOfTopBounds || y > MAX_GRAPH_Y_COORDINATE;
-    this.isOutOfBottomBounds =
-      this.isOutOfBottomBounds || y < MIN_GRAPH_Y_COORDINATE;
-    this.isOutOfRightBounds =
-      this.isOutOfRightBounds || x > MAX_GRAPH_X_COORDINATE;
-    this.isOutOfLeftBounds =
-      this.isOutOfLeftBounds || x < MIN_GRAPH_X_COORDINATE;
+    this.isOutOfBounds.max.x =
+      this.isOutOfBounds.max.x || x > MAX_GRAPH_X_COORDINATE;
+    this.isOutOfBounds.min.x =
+      this.isOutOfBounds.min.x || x < MIN_GRAPH_X_COORDINATE;
+    this.isOutOfBounds.max.y =
+      this.isOutOfBounds.max.y || y > MAX_GRAPH_Y_COORDINATE;
+    this.isOutOfBounds.min.y =
+      this.isOutOfBounds.min.y || y < MIN_GRAPH_Y_COORDINATE;
   }
 
   private computeCurve() {
@@ -122,90 +134,96 @@ export default class Bezier {
   }
 
   // eslint-disable-next-line sonarjs/cognitive-complexity
-  getBoundaryValue(
-    movedPoint: BezierPointName,
-    prevPosition: Position,
-    BoundaryDimension: BoundaryDimension,
-  ): number {
-    const isMax = BoundaryDimension.includes('max');
-    const isX = BoundaryDimension.includes('X');
+  getBoundaries(movedPointName: BezierPointName, prevPosition: Position) {
+    // The position user intends to move the given point
+    const requestedPosition = this.points[movedPointName];
 
-    const binarySearchBoundary = (low: number, high: number): number => {
-      if (low > high) {
-        return isMax ? high : low;
+    const calculateBoundary = (
+      axis: Axis,
+      boundaryDirection: 'min' | 'max',
+      // eslint-disable-next-line sonarjs/cognitive-complexity
+    ): number => {
+      /*
+        Set one side of boundaries, trusting that the previous position is correct. 
+        Might not be the best practice, but saves a lot of computation and allows 
+        to adjust partially broken curves if they somehow occur
+      */
+      // Return the previous position if it's on the right side
+      if (
+        (boundaryDirection === 'min' &&
+          prevPosition[axis] < requestedPosition[axis]) ||
+        (boundaryDirection === 'max' &&
+          prevPosition[axis] > requestedPosition[axis])
+      ) {
+        return prevPosition[axis];
       }
 
-      const mid = Math.floor((low + high) / 2);
-      let testPosition: BezierPoints = {
-        ...this.points,
-        [movedPoint]: isX
-          ? { y: this.points[movedPoint].y, x: mid }
-          : { x: this.points[movedPoint].x, y: mid },
+      // Return the new position if it's on the right side and inside of bounds
+      if (!this.isOutOfBounds[boundaryDirection][axis]) {
+        return requestedPosition[axis];
+      }
+
+      const binarySearchBoundary = (low: number, high: number): number => {
+        if (low > high) {
+          return high; // Or return low, depending on your boundary requirements
+        }
+
+        const mid = Math.floor((low + high) / 2);
+        let testPoints: BezierPoints = {
+          ...this.points,
+          [movedPointName]:
+            axis === 'x'
+              ? { y: this.points[movedPointName].y, x: mid }
+              : { x: this.points[movedPointName].x, y: mid },
+        };
+
+        // Adjust handle positions if moving p0 or p3
+        if (movedPointName === 'p0' || movedPointName === 'p3') {
+          const handlePointName = movedPointName === 'p0' ? 'p1' : 'p2';
+          const offset =
+            axis === 'x'
+              ? this.points[handlePointName].x - this.points[movedPointName].x
+              : this.points[handlePointName].y - this.points[movedPointName].y;
+
+          testPoints[handlePointName] = {
+            ...this.points[handlePointName],
+            x: axis === 'x' ? mid + offset : this.points[handlePointName].x,
+            y: axis === 'x' ? this.points[handlePointName].y : mid + offset,
+          };
+        }
+
+        const isOutOfBounds = !isBezierInBoundaries(
+          testPoints,
+          axis,
+          boundaryDirection,
+        );
+
+        if (isOutOfBounds) {
+          return boundaryDirection === 'max'
+            ? binarySearchBoundary(low, mid - 1)
+            : binarySearchBoundary(mid + 1, high);
+        } else {
+          return boundaryDirection === 'max'
+            ? binarySearchBoundary(mid + 1, high)
+            : binarySearchBoundary(low, mid - 1);
+        }
       };
 
-      // Adjust handle positions if moving p0 or p3
-      if (movedPoint === 'p0' || movedPoint === 'p3') {
-        const handlePointName = movedPoint === 'p0' ? 'p1' : 'p2';
-        const offset = isX
-          ? this.points[handlePointName].x - this.points[movedPoint].x
-          : this.points[handlePointName].y - this.points[movedPoint].y;
-
-        testPosition = {
-          ...this.points,
-          [movedPoint]: isX
-            ? { ...this.points[movedPoint], x: mid }
-            : { ...this.points[movedPoint], y: mid },
-          [handlePointName]: isX
-            ? {
-                ...this.points[handlePointName],
-                x: mid + offset,
-              }
-            : {
-                ...this.points[handlePointName],
-                y: mid + offset,
-              },
-        };
-      }
-
-      const testBezier = new Bezier(testPosition);
-      const outOfBounds = isX
-        ? isMax
-          ? testBezier.isOutOfRightBounds
-          : testBezier.isOutOfLeftBounds
-        : isMax
-        ? testBezier.isOutOfTopBounds
-        : testBezier.isOutOfBottomBounds;
-
-      if (outOfBounds) {
-        return isMax
-          ? binarySearchBoundary(low, mid - 1)
-          : binarySearchBoundary(mid + 1, high);
-      } else {
-        return isMax
-          ? binarySearchBoundary(mid + 1, high)
-          : binarySearchBoundary(low, mid - 1);
-      }
+      return binarySearchBoundary(
+        Math.min(prevPosition[axis], requestedPosition[axis]),
+        Math.max(prevPosition[axis], requestedPosition[axis]),
+      );
     };
 
-    const start = isX ? prevPosition.x : prevPosition.y;
-    const end = isX ? this.points[movedPoint].x : this.points[movedPoint].y;
-
-    return binarySearchBoundary(start, end);
-  }
-
-  getBoundMaxX(movedPoint: BezierPointName, prevPosition: Position): number {
-    return this.getBoundaryValue(movedPoint, prevPosition, 'maxX');
-  }
-
-  getBoundMinX(movedPoint: BezierPointName, prevPosition: Position): number {
-    return this.getBoundaryValue(movedPoint, prevPosition, 'minX');
-  }
-
-  getBoundMaxY(movedPoint: BezierPointName, prevPosition: Position): number {
-    return this.getBoundaryValue(movedPoint, prevPosition, 'maxY');
-  }
-
-  getBoundMinY(movedPoint: BezierPointName, prevPosition: Position): number {
-    return this.getBoundaryValue(movedPoint, prevPosition, 'minY');
+    return {
+      min: {
+        x: calculateBoundary('x', 'min'),
+        y: calculateBoundary('y', 'min'),
+      },
+      max: {
+        x: calculateBoundary('x', 'max'),
+        y: calculateBoundary('y', 'max'),
+      },
+    };
   }
 }

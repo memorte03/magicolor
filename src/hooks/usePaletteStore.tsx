@@ -251,10 +251,10 @@ const usePaletteStore = create<PaletteState>((set, get) => ({
       Limit the y position to prevent the point from being dragged
       out of graph boundaries
       */
-      normalizedPosition.y = Math.min(
-        Math.max(normalizedPosition.y, MIN_GRAPH_Y_COORDINATE),
-        MAX_GRAPH_Y_COORDINATE,
-      );
+      // normalizedPosition.y = Math.min(
+      //   Math.max(normalizedPosition.y, MIN_GRAPH_Y_COORDINATE),
+      //   MAX_GRAPH_Y_COORDINATE,
+      // );
 
       /*
       If an adjacent curve overlaps limit */
@@ -268,20 +268,32 @@ const usePaletteStore = create<PaletteState>((set, get) => ({
           },
         ]);
 
-        const getFinalCoord = (coord: number, min: number, max: number) => {
-          if (min !== coord) return min;
-          if (max !== coord) return max;
-          return coord;
-        };
+        const boundPosition = bezier.getBoundaries('p3', point.position);
 
-        const maxX = bezier.getBoundMaxX('p3', point.position);
-        const minX = bezier.getBoundMinX('p3', point.position);
-        const maxY = bezier.getBoundMaxY('p3', point.position);
-        const minY = bezier.getBoundMinY('p3', point.position);
-        console.log(maxX, minX, maxY, minY);
+        const xDirection =
+          normalizedPosition.x > point.position.x ? 'grow' : 'shrink';
+        const yDirection =
+          normalizedPosition.y > point.position.y ? 'grow' : 'shrink';
 
-        normalizedPosition.x = getFinalCoord(normalizedPosition.x, minX, maxX);
-        normalizedPosition.y = getFinalCoord(normalizedPosition.y, minY, maxY);
+        if (xDirection === 'grow') {
+          normalizedPosition.x = Math.min(
+            boundPosition.max.x,
+            normalizedPosition.x,
+          );
+        }
+        if (xDirection === 'shrink') {
+          normalizedPosition.x = Math.max(
+            boundPosition.min.x,
+            normalizedPosition.x,
+          );
+        }
+        if (yDirection === 'grow') {
+          normalizedPosition.y = Math.min(
+            boundPosition.min.y,
+            normalizedPosition.y,
+          );
+        }
+        console.log(boundPosition);
       }
 
       // If the curve extends over the top/bottom boundary, limit the y

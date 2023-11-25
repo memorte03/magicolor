@@ -56,3 +56,8 @@ export type GraphDimensions = {
   width: number;
   height: number;
 };
+
+export type BezierPointName = 'p0' | 'p1' | 'p2' | 'p3';
+export type BezierPoints = {
+  [key in BezierPointName]: Position;
+};
