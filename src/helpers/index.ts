@@ -7,5 +7,5 @@ export {
   encodeBase32Value,
   encodeGraphPoint,
   encodeSwatch,
-  testBase32,
+  testBase32Path,
 } from './base32/';

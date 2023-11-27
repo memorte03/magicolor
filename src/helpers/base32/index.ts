@@ -71,4 +71,4 @@ export {
   encodePathFromPalette,
   encodeSwatch,
 } from './encode';
-export { testBase32 } from './test';
+export { testBase32Path } from './testPath';

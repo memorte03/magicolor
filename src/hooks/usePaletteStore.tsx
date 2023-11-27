@@ -3,12 +3,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { create } from 'zustand';
 
 import { Bezier } from '@/classes';
-import {
-  MAX_GRAPH_X_COORDINATE,
-  MAX_GRAPH_Y_COORDINATE,
-  MIN_GRAPH_Y_COORDINATE,
-} from '@/constants';
-import { decodePaletteFromPath, testBase32 } from '@/helpers';
+import { MAX_GRAPH_X_COORDINATE, MAX_GRAPH_Y_COORDINATE } from '@/constants';
+import { decodePaletteFromPath, testBase32Path } from '@/helpers';
 import adjustPointHandles from '@/helpers/adjustPointHandles';
 import calculateIntermediateBezierPoint from '@/helpers/calculateIntermediateBezierPoint';
 import { calculateStorePosition } from '@/helpers/position';
@@ -202,7 +198,7 @@ const usePaletteStore = create<PaletteState>((set, get) => ({
   setGraphDimensions: () => {},
 
   setDataFromBase32: (base32) => {
-    const isBase32Valid = testBase32(base32);
+    const isBase32Valid = testBase32Path(base32);
     if (!isBase32Valid) {
       console.error(`Invalid base32 string ${base32}`);
       return;
@@ -288,12 +284,19 @@ const usePaletteStore = create<PaletteState>((set, get) => ({
           );
         }
         if (yDirection === 'grow') {
+          console.log(boundPosition.max.y);
           normalizedPosition.y = Math.min(
+            boundPosition.max.y,
+            normalizedPosition.y,
+          );
+        }
+        if (yDirection === 'shrink') {
+          console.log('y grow');
+          normalizedPosition.y = Math.max(
             boundPosition.min.y,
             normalizedPosition.y,
           );
         }
-        console.log(boundPosition);
       }
 
       // If the curve extends over the top/bottom boundary, limit the y

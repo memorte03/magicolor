@@ -8,7 +8,7 @@ import {
   SIGN_DECODE_CHAR,
   SignChar,
   SignValue,
-  testBase32,
+  testBase32Path,
 } from './index';
 import { Bezier } from '@/classes';
 import {
@@ -138,7 +138,7 @@ export function decodeGraphPoint(
 }
 
 export function decodePaletteFromPath(base32: string): Palette {
-  if (!testBase32(base32)) {
+  if (!testBase32Path(base32)) {
     throw new Error(`Invalid base32 string ${base32}`);
   }
 

@@ -13,19 +13,22 @@ export default function isBezierInBoundaries(
   boundaryDirection: 'min' | 'max',
 ): boolean {
   const steps = Math.ceil(
-    (points.p3[axis] - points.p1[axis]) / BEZIER_CURVE_INACCURACY,
+    Math.abs(
+      // This has to be refactored to take in consideration handles.
+      // Currently if let's say a curve's xs are close but the curve has
+      // a very large spike in height the step amount still stays low
+      points.p3.x - points.p0.x,
+    ) / BEZIER_CURVE_INACCURACY,
   );
 
   const boundary =
-    boundaryDirection === 'min'
-      ? Math.max(
-          points.p0[axis],
-          axis === 'x' ? MIN_GRAPH_X_COORDINATE : MIN_GRAPH_Y_COORDINATE,
-        )
-      : Math.min(
-          points.p3[axis],
-          axis === 'x' ? MAX_GRAPH_X_COORDINATE : MAX_GRAPH_Y_COORDINATE,
-        );
+    axis === 'x'
+      ? boundaryDirection === 'min'
+        ? Math.max(points.p0.x, MIN_GRAPH_X_COORDINATE)
+        : Math.min(points.p3.x, MAX_GRAPH_X_COORDINATE)
+      : boundaryDirection === 'min'
+      ? MIN_GRAPH_Y_COORDINATE
+      : MAX_GRAPH_Y_COORDINATE;
 
   for (let i = 0; i <= steps; i++) {
     const t = i / steps;

@@ -72,7 +72,7 @@ export default class Bezier {
     // The divider specifies the accuracy. The lower the divider, the higher the accuracy
     // TODO: When using lover accuracy the curves sometimes become disconnected on the bend
     const steps = Math.ceil(
-      (this.points.p3.x - this.points.p1.x) / BEZIER_CURVE_INACCURACY,
+      (this.points.p3.x - this.points.p0.x) / BEZIER_CURVE_INACCURACY,
     );
 
     if (steps > 0) {
@@ -151,15 +151,18 @@ export default class Bezier {
       // Return the previous position if it's on the right side
       if (
         (boundaryDirection === 'min' &&
-          prevPosition[axis] < requestedPosition[axis]) ||
+          prevPosition[axis] <= requestedPosition[axis]) ||
         (boundaryDirection === 'max' &&
-          prevPosition[axis] > requestedPosition[axis])
+          prevPosition[axis] >= requestedPosition[axis])
       ) {
         return prevPosition[axis];
       }
 
       // Return the new position if it's on the right side and inside of bounds
       if (!this.isOutOfBounds[boundaryDirection][axis]) {
+        if (axis === 'y' && boundaryDirection === 'max') {
+          console.log('co kurwa', this.points);
+        }
         return requestedPosition[axis];
       }
 
